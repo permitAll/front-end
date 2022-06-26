@@ -58,15 +58,12 @@ function App() {
         },
       });
 
-      alert("alert");
-      var from = window.web3.eth.accounts[0];
-
-      alert("alert");
+      var from = window.ethereum.accounts[0];
 
       var params = [from, msgParams];
       var method = "eth_signTypedData_v4";
 
-      window.web3.currentProvider.sendAsync({
+      window.ethereum.sendAsync({
         method,
         params,
         from,
