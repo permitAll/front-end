@@ -14,7 +14,7 @@ function App() {
   const [outputAmount, setOutputAmount] = useState();
 
   function swapToken() {
-    // compute the amount out based on inputAmount
+    // triggers the swapping
   }
 
   useEffect(() => {
@@ -141,7 +141,7 @@ function App() {
                 <div className="flex flex-row justify-center items-center">
                   <input
                     type="value"
-                    value={outputAmount}
+                    value={inputAmount * 3213}
                     // onChange={}
                     id="value"
                     className="w-full p-4 pr-12 text-sm border-gray-200 rounded-lg shadow-sm"
