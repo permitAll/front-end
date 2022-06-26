@@ -5,12 +5,92 @@ import React, { useState, useEffect } from "react";
 import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
 
+// TODO: add the SwapJSON
+// import SwapJSON from "./SwapJSON.json";
+
 function App() {
   const { status, connect, account, chainId, ethereum } = useMetaMask();
   const [inputAmount, setInputAmount] = useState();
   const [outputAmount, setOutputAmount] = useState();
 
   function swapToken() {}
+
+  useEffect(() => {
+    signTypedDataV4Button.addEventListener("click", function (event) {
+      event.preventDefault();
+
+      const msgParams = JSON.stringify({
+        domain: {
+          chainId: chainId,
+          name: "ERC20PermitEverywhere",
+          verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          version: "1.0.0",
+        },
+        message: {
+          // erc20
+          token: "0x5962DF0fB181a089476C58eDb29ee7960fF53794",
+          // uniswap
+          spender: "0x5962DF0fB181a089476C58eDb29ee7960fF53794",
+          maxAmount: "100000",
+          deadline: "1000000000",
+          nonce: "5",
+        },
+        primaryType: "PermitTransferFrom",
+        types: {
+          EIP712Domain: [
+            { name: "name", type: "string" },
+            { name: "version", type: "string" },
+            { name: "chainId", type: "uint256" },
+            { name: "verifyingContract", type: "address" },
+          ],
+          PermitTransferFrom: [
+            { name: "token", type: "address" },
+            { name: "spender", type: "address" },
+            { name: "maxAmount", type: "uint256" },
+            { name: "deadline", type: "uint256" },
+            { name: "nonce", type: "uint256" },
+          ],
+        },
+      });
+
+      var from = web3.eth.accounts[0];
+
+      var params = [from, msgParams];
+      var method = "eth_signTypedData_v4";
+
+      web3.currentProvider.sendAsync(
+        {
+          method,
+          params,
+          from,
+        },
+        function (err, result) {
+          if (err) return console.dir(err);
+          if (result.error) {
+            alert(result.error.message);
+          }
+          if (result.error) return console.error("ERROR", result);
+          console.log("TYPED SIGNED:" + JSON.stringify(result.result));
+
+          const recovered = sigUtil.recoverTypedSignature_v4({
+            data: JSON.parse(msgParams),
+            sig: result.result,
+          });
+
+          if (
+            ethUtil.toChecksumAddress(recovered) ===
+            ethUtil.toChecksumAddress(from)
+          ) {
+            alert("Successfully recovered signer as " + from);
+          } else {
+            alert(
+              "Failed to verify signer when comparing " + result + " to " + from
+            );
+          }
+        }
+      );
+    });
+  }, []);
 
   const chainIDs = {
     "0x1": "Ethereum",
@@ -99,6 +179,7 @@ function App() {
             <button
               className="block w-full px-5 py-3 text-sm font-medium text-white bg-indigo-600 rounded-lg"
               onClick={() => swapToken()}
+              id="signTypedDataV4Button"
             >
               One Click Swap
             </button>
