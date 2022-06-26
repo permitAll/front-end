@@ -6,10 +6,12 @@ import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
 
 import FactoryJSON from "./Factory.json";
-const FACTORY_CONTRACT_ADDRESS = "0x1232e4b6B9f964B27f0Bf7391f452Ae3fB474c9C";
+import RecoveryJSON from "./Recovery.json";
+
+const FACTORY_CONTRACT_ADDRESS = "0xC33331282FDE8edBF4911e4D12dFF66c02687457";
 
 const provider = new ethers.providers.Web3Provider(window.ethereum);
-const contract = new ethers.Contract(
+const factoryContract = new ethers.Contract(
   FACTORY_CONTRACT_ADDRESS,
   FactoryJSON.abi,
   provider
@@ -18,15 +20,59 @@ const contract = new ethers.Contract(
 function App() {
   const { status, connect, account, chainId, ethereum } = useMetaMask();
 
-  async function deployContract() {
+  function deployContract() {
     const signer = provider.getSigner();
-    console.log(signer);
     try {
-      contract
+      factoryContract
         .connect(signer)
         .createRecoveryContract(
-          ethers.utils.keccak256(ethers.utils.toUtf8Bytes("password123"))
+          ethers.utils.keccak256(ethers.utils.toUtf8Bytes(password))
         );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function commitRecovery() {
+    const signer = provider.getSigner();
+    const recoveryContractAddress = await factoryContract
+      .connect(signer)
+      .recoveryContracts(account);
+
+    const recoveryContract = new ethers.Contract(
+      recoveryContractAddress,
+      RecoveryJSON.abi,
+      provider
+    );
+
+    try {
+      recoveryContract
+        .connect(signer)
+        .commitLockHash(
+          ethers.utils.solidityKeccak256(
+            ["string", "address"],
+            [passwordCommit, recipient]
+          )
+        );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function claimOwnership() {
+    const signer = provider.getSigner();
+    const recoveryContractAddress = await factoryContract
+      .connect(signer)
+      .recoveryContracts(account);
+
+    const recoveryContract = new ethers.Contract(
+      recoveryContractAddress,
+      RecoveryJSON.abi,
+      provider
+    );
+
+    try {
+      recoveryContract.connect(signer).claimOwnership(passwordClaim, account);
     } catch (err) {
       console.log(err);
     }
@@ -53,6 +99,10 @@ function App() {
     return null;
   }
   const [page, setPage] = useState("home");
+  const [password, setPassword] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [passwordCommit, setPasswordCommit] = useState("");
+  const [passwordClaim, setPasswordClaim] = useState("");
 
   const pages = {
     home: (
@@ -79,6 +129,8 @@ function App() {
                 <div className="relative mt-1">
                   <input
                     type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                     id="password"
                     className="w-full p-4 pr-12 text-sm border-gray-200 rounded-lg shadow-sm"
                     placeholder="Enter password"
@@ -129,21 +181,17 @@ function App() {
               Setup Allowances
             </h1>
 
-            <p className="max-w-md mx-auto mt-4 text-center text-gray-500">
+            {/* <p className="max-w-md mx-auto mt-4 text-center text-gray-500">
               Set allowance of your tokens to the recovery address.
-            </p>
+            </p> */}
 
-            <form
-              action=""
-              className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl"
-            >
+            <div className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl">
               <p className="text-lg font-medium">
                 Set up allowances for your ERC-20 and ERC-721
               </p>
 
               <div>100 USDC</div>
               <div>50 COMP</div>
-              <div>1 Meebits</div>
 
               <button
                 type="submit"
@@ -151,7 +199,7 @@ function App() {
               >
                 Setup Allowances
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
@@ -168,18 +216,31 @@ function App() {
               Set allowance of your tokens to the recovery address.
             </p>
 
-            <form
-              action=""
-              className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl"
-            >
+            <div className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl">
               <p className="text-lg font-medium">
                 Use your secret password to commit a recovery ahead of time to
                 prevent MEV front-running. A hash is generated based on your
                 password and wallet address.
               </p>
-
-              <div>Hash: 0x9839829839389</div>
-
+              {/* <div>
+                Hash:
+                {recipient === ""
+                  ? "-"
+                  : ethers.utils.solidityKeccak256(
+                      ["string", "address"],
+                      [passwordCommit, recipient]
+                    )}
+              </div> */}
+              <div class="relative mt-1">
+                <input
+                  type="text"
+                  id="text"
+                  class="w-full p-4 pr-12 text-sm border-gray-200 rounded-lg shadow-sm"
+                  placeholder="Enter recipient"
+                  value={recipient}
+                  onChange={(event) => setRecipient(event.target.value)}
+                />
+              </div>
               <div>
                 <div className="relative mt-1">
                   <input
@@ -187,6 +248,8 @@ function App() {
                     id="password"
                     className="w-full p-4 pr-12 text-sm border-gray-200 rounded-lg shadow-sm"
                     placeholder="Enter password"
+                    value={passwordCommit}
+                    onChange={(event) => setPasswordCommit(event.target.value)}
                   />
 
                   <span className="absolute inset-y-0 inline-flex items-center right-4">
@@ -213,14 +276,14 @@ function App() {
                   </span>
                 </div>
               </div>
-
               <button
                 type="submit"
                 className="block w-full px-5 py-3 text-sm font-medium text-white bg-indigo-600 rounded-lg"
+                onClick={() => commitRecovery()}
               >
                 Commit Recovery
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
@@ -237,10 +300,7 @@ function App() {
               Set allowance of your tokens to the recovery address.
             </p>
 
-            <form
-              action=""
-              className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl"
-            >
+            <div className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl">
               <p className="text-lg font-medium">
                 Set up allowances for your ERC-20 and ERC-721
               </p>
@@ -250,6 +310,8 @@ function App() {
                   <input
                     type="password"
                     id="password"
+                    value={passwordClaim}
+                    onChange={(event) => setPasswordClaim(event.target.value)}
                     className="w-full p-4 pr-12 text-sm border-gray-200 rounded-lg shadow-sm"
                     placeholder="Enter password"
                   />
@@ -282,10 +344,11 @@ function App() {
               <button
                 type="submit"
                 className="block w-full px-5 py-3 text-sm font-medium text-white bg-indigo-600 rounded-lg"
+                onClick={() => claimOwnership()}
               >
                 Claim contract ownership
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
