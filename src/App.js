@@ -141,7 +141,7 @@ function App() {
                 <div className="flex flex-row justify-center items-center">
                   <input
                     type="value"
-                    value={inputAmount * 3213}
+                    value={inputAmount * 32123}
                     // onChange={}
                     id="value"
                     className="w-full p-4 pr-12 text-sm border-gray-200 rounded-lg shadow-sm"
