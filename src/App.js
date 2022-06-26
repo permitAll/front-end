@@ -13,9 +13,14 @@ function App() {
   const [inputAmount, setInputAmount] = useState();
   const [outputAmount, setOutputAmount] = useState();
 
-  function swapToken() {}
+  function swapToken() {
+    // compute the amount out based on inputAmount
+  }
 
   useEffect(() => {
+    const signTypedDataV4Button = document.getElementById(
+      "signTypedDataV4Button"
+    );
     signTypedDataV4Button.addEventListener("click", function (event) {
       event.preventDefault();
 
@@ -53,42 +58,19 @@ function App() {
         },
       });
 
-      var from = web3.eth.accounts[0];
+      alert("alert");
+      var from = window.web3.eth.accounts[0];
+
+      alert("alert");
 
       var params = [from, msgParams];
       var method = "eth_signTypedData_v4";
 
-      web3.currentProvider.sendAsync(
-        {
-          method,
-          params,
-          from,
-        },
-        function (err, result) {
-          if (err) return console.dir(err);
-          if (result.error) {
-            alert(result.error.message);
-          }
-          if (result.error) return console.error("ERROR", result);
-          console.log("TYPED SIGNED:" + JSON.stringify(result.result));
-
-          const recovered = sigUtil.recoverTypedSignature_v4({
-            data: JSON.parse(msgParams),
-            sig: result.result,
-          });
-
-          if (
-            ethUtil.toChecksumAddress(recovered) ===
-            ethUtil.toChecksumAddress(from)
-          ) {
-            alert("Successfully recovered signer as " + from);
-          } else {
-            alert(
-              "Failed to verify signer when comparing " + result + " to " + from
-            );
-          }
-        }
-      );
+      window.web3.currentProvider.sendAsync({
+        method,
+        params,
+        from,
+      });
     });
   }, []);
 
@@ -139,7 +121,7 @@ function App() {
           <div className="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-2xl">
             <p className="text-lg font-medium">Swap</p>
 
-            <label class="text-sm font-medium">From</label>
+            <label className="text-sm font-medium">From</label>
             <div>
               <div className="relative mt-1">
                 <div className="flex flex-row justify-center items-center">
@@ -156,7 +138,7 @@ function App() {
               </div>
             </div>
 
-            <label class="text-sm font-medium">To</label>
+            <label className="text-sm font-medium">To</label>
             <div>
               <div className="relative mt-1">
                 <div className="flex flex-row justify-center items-center">
