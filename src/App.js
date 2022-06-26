@@ -12,6 +12,13 @@ function App() {
 
   function swapToken() {}
 
+  const chainIDs = {
+    "0x1": "Ethereum",
+    "0x4": "Rinkeby",
+    "0x89": "Polygon",
+    "0xa": "Optimism",
+  };
+
   function loadMetamask() {
     if (status === "initializing")
       return <div>Synchronisation with MetaMask ongoing...</div>;
@@ -25,8 +32,9 @@ function App() {
 
     if (status === "connected")
       return (
-        <div>
-          Connected account {account} on chain ID {chainId}
+        <div className="mx-2 my-2">
+          Connected to{" "}
+          <span className="text-indigo-600 font-bold">{chainIDs[chainId]}</span>
         </div>
       );
 
